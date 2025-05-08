@@ -33,6 +33,8 @@ from rclpy.client import Client
 from rclpy.action import ActionServer, ActionClient
 from typing import Any, Callable
 
+import simple_serviceclient_py.simple_serviceclient as simple_serviceclient
+import simple_actionclient_py.simple_actionclient as simple_actionclient
 import dua_qos_py.dua_qos_reliable as dua_qos_reliable
 
 class NodeBase(Node):
@@ -233,23 +235,25 @@ class NodeBase(Node):
       callback=callback,
       callback_group=srv_cgroup)
     if self.verbose:
-      self.get_logger().info(f"[SERVICE SRV] '{service.service_name}'")
+      self.get_logger().info(f"[SERVICE SRV] '{srv_name}'")
     return service
 
-  def dua_create_service_client(self, srv_type: Any, srv_name: str) -> Client:
+  def dua_create_service_client(self, srv_type: Any, srv_name: str, wait: bool = True) -> Client:
     """
     Wraps the creation of a service client.
     Args:
       srv_type (Any): Service type.
       srv_name (str): Service name.
     Returns:
-      client (Client).
+      client (simple_serviceclient.Client).
     """
-    client = self.create_client(
-      srv_type=srv_type,
-      srv_name=srv_name)
+    client = simple_serviceclient.Client(
+      self,
+      srv_type,
+      srv_name,
+      wait)
     if self.verbose:
-      self.get_logger().info(f"[SERVICE CLN] '{client.service_name}'")
+      self.get_logger().info(f"[SERVICE CLN] '{srv_name}'")
     return client
 
   def dua_create_action_server(self, action_type: Any, action_name: str, execute_callback: Callable, goal_callback: Callable, cancel_callback: Callable,
@@ -280,7 +284,8 @@ class NodeBase(Node):
       self.get_logger().info(f"[ACTION SRV] '{action_name}'")
     return server
 
-  def dua_create_action_client(self, action_type: Any, action_name: str) -> ActionClient:
+  def dua_create_action_client(self, action_type: Any, action_name: str, feedback_callback: Callable,
+                               wait: bool = True, spin_period: float = 0.1) -> ActionClient:
     """
     Wraps the creation of an action client.
     Args:
@@ -289,10 +294,13 @@ class NodeBase(Node):
     Returns:
       client (ActionClient).
     """
-    client = ActionClient(
-      node=self,
-      action_type=action_type,
-      action_name=action_name)
+    client = simple_actionclient.Client(
+      self,
+      action_type,
+      action_name,
+      feedback_callback,
+      wait,
+      spin_period)
     if self.verbose:
       self.get_logger().info(f"[ACTION CLN] '{action_name}'")
     return client

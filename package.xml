@@ -9,6 +9,8 @@
 
   <depend>dua_qos_py</depend>
   <!-- <depend>params_manager_py</depend> -->
+  <depend>simple_serviceclient_py</depend>
+  <depend>simple_actionclient_py</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_actions</depend>
 
