@@ -28,6 +28,8 @@ class NodeBase(Node):
     # Parameter manager object.
     self.pmanager = None
 
+    self.dua_init_node()
+
   def dua_init_node(self):
     """
     Initializes the node calling internal initializers.
