@@ -228,16 +228,17 @@ class NodeBase(Node):
       self.get_logger().info(f"[SERVICE CLN] '{client.service_name}'")
     return client
 
-  def dua_create_action_server(self, action_type: Any, action_name: str, goal_callback: Callable, cancel_callback: Callable,
-                            accepted_callback: Callable, as_cgroup: CallbackGroup = None) -> ActionServer:
+  def dua_create_action_server(self, action_type: Any, action_name: str, execute_callback: Callable, goal_callback: Callable, cancel_callback: Callable,
+                            handle_accepted_callback: Callable, as_cgroup: CallbackGroup = None) -> ActionServer:
     """
     Wraps the creation of an action server.
     Args:
       action_type (Any): Action type.
       action_name (str): Action name.
+      execute_callback (Callable): Execute callback.
       goal_callback (Callable): Goal callback.
       cancel_callback (Callable): Cancel callback.
-      accepted_callback (Callable): Accepted callback.
+      handle_accepted_callback (Callable): Accepted callback.
       as_cgroup (CallbackGroup): Action server callback group.
     Returns:
       server (ActionServer).
@@ -246,29 +247,28 @@ class NodeBase(Node):
       node=self,
       action_type=action_type,
       action_name=action_name,
+      execute_callback=execute_callback,
       goal_callback=goal_callback,
       cancel_callback=cancel_callback,
-      accepted_callback=accepted_callback,
+      handle_accepted_callback=handle_accepted_callback,
       callback_group=as_cgroup)
     if self.verbose:
       self.get_logger().info(f"[ACTION SRV] '{action_name}'")
     return server
 
-  def dua_create_action_client(self, action_type: Any, action_name: str, feedback_callback: Callable = None) -> ActionClient:
+  def dua_create_action_client(self, action_type: Any, action_name: str) -> ActionClient:
     """
     Wraps the creation of an action client.
     Args:
       action_type (Any): Action type.
       action_name (str): Action name.
-      feedback_callback (Callable): Feedback callback.
     Returns:
       client (ActionClient).
     """
     client = ActionClient(
       node=self,
       action_type=action_type,
-      action_name=action_name,
-      feedback_callback=feedback_callback)
+      action_name=action_name)
     if self.verbose:
       self.get_logger().info(f"[ACTION CLN] '{action_name}'")
     return client
