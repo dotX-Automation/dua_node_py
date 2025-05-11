@@ -316,7 +316,7 @@ class NodeBase(Node):
             handle_accepted_callback=handle_accepted_callback,
             callback_group=as_cgroup)
         if self._verbose:
-            self.get_logger().info(f"[ACTION SRV] '{self.get_entity_fqn(action_name)}'")
+            self.get_logger().info(f"[ACTION SRV] '{self._get_entity_fqn(action_name)}'")
         return server
 
     def dua_create_action_client(
@@ -348,7 +348,7 @@ class NodeBase(Node):
             self.get_logger().info(f"[ACTION CLN] '{action_name}'")
         return client
 
-    def get_entity_fqn(self, entity_name: str) -> str:
+    def _get_entity_fqn(self, entity_name: str) -> str:
         """
         Returns the fully qualified name of an entity.
 
