@@ -1,18 +1,18 @@
 # dua_node_py
 
-python base class library that extends the base `rclpy.node.Node` providing direct and easy access to the DUA features.
+Python base class library that extends the base `rclpy.node.Node` providing direct and easy access to the DUA features.
 
 ## Contents
 
-This library provides the new `dua_node_py.dua_node_py.NodeBase` base ROS 2 node class that implements the following features:
+This library provides the new `dua_node_py.dua_node.NodeBase` base ROS 2 node class that implements the following features.
 
-- [x] Automatic initialization of an embedded `PManager` object to manage node parameters from the [`params_manager_py`](https://github.com/dotX-Automation/params_manager_py/README.md) library. This way, one only needs to define and call `init_parameters` in the node class constructor to automatically declare and set up the parameters.
+- [x] Automatic initialization of an embedded `PManager` object to manage node parameters from the [`params_manager_py`](https://github.com/dotX-Automation/params_manager_py/README.md) library.
 
 ## Usage
 
-Just include the `dua_node_py.dua_node_py` file in your node class, and inherit from the `NodeBase` class. The constructor accepts the following arguments:
+Just include the `dua_node_py.dua_node_py` file in your node class, and inherit from the `NodeBase` class. The constructor accepts the following arguments.
 
-- `node_name (str)`: the name of the node;
+- `node_name (str)`: the name of the node.
 - `verbose (bool)`: a boolean flag that enables verbose logs in various utils, defaults to `false`.
 
 ---
