@@ -26,6 +26,8 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile
 import dua_qos_py.dua_qos_reliable as dua_qos_reliable
 
+from params_manager_py.params_manager import PManager
+
 from rclpy.callback_groups import CallbackGroup, ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 
 from rclpy.timer import Timer
@@ -57,7 +59,7 @@ class NodeBase(Node):
         super().__init__(node_name)
 
         self._verbose = verbose
-        self._pmanager = None  # TODO Update
+        self.pmanager = PManager(self, verbose)
 
         # This is possible thanks to Python's Method Resolution Order (MRO)
         self._dua_init_node()
@@ -82,6 +84,7 @@ class NodeBase(Node):
         """
         if self._verbose:
             self.get_logger().info("--- PARAMETERS ---")
+        self.pmanager.init()
         self.init_parameters()
 
     def _dua_init_cgroups(self):
