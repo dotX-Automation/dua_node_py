@@ -327,8 +327,7 @@ class NodeBase(Node):
         action_type: Any,
         action_name: str,
         feedback_callback: Callable = None,
-        wait: bool = True,
-        spin_period: float = 0.1
+        wait: bool = True
     ) -> ActionClient:
         """
         Wraps the creation of an action client, purposely provided by the simple_actionclient.Client implementation.
@@ -337,7 +336,6 @@ class NodeBase(Node):
         :param action_name: Action name.
         :param feedback_callback: Feedback message callback.
         :param wait: Waits for the server to come up.
-        :param spin_period: Period of the internal spinning loop (seconds).
         :return: Action client.
         """
         client = ActionClient(
@@ -345,8 +343,7 @@ class NodeBase(Node):
             action_type,
             action_name,
             feedback_callback,
-            wait,
-            spin_period)
+            wait)
         if self._verbose:
             self.get_logger().info(f"[ACTION CLN] '{action_name}'")
         return client
