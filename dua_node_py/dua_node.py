@@ -348,6 +348,36 @@ class NodeBase(Node):
             self.get_logger().info(f"[ACTION CLN] '{action_name}'")
         return client
 
+    def check_frame_global(self, frame_id: str, frame_prefix: str = "") -> bool:
+        """
+        Checks if a given frame ID corresponds to the global frame, applying conventions.
+
+        :param frame_id: Frame ID to check.
+        :param frame_prefix: Frame prefix to consider (including trailing slash).
+        :return: Yes or no.
+        """
+        return frame_id == frame_prefix + "map" or frame_id == frame_prefix + "world"
+
+    def check_frame_local(self, frame_id: str, frame_prefix: str = "") -> bool:
+        """
+        Checks if a given frame ID corresponds to the local frame, applying conventions.
+
+        :param frame_id: Frame ID to check.
+        :param frame_prefix: Frame prefix to consider (including trailing slash).
+        :return: Yes or no.
+        """
+        return frame_id == frame_prefix + "odom"
+
+    def check_frame_body(self, frame_id: str, frame_prefix: str = "") -> bool:
+        """
+        Checks if a given frame ID corresponds to the body frame, applying conventions.
+
+        :param frame_id: Frame ID to check.
+        :param frame_prefix: Frame prefix to consider (including trailing slash).
+        :return: Yes or no.
+        """
+        return frame_id == frame_prefix + "base_link"
+
     def _get_entity_fqn(self, entity_name: str) -> str:
         """
         Returns the fully qualified name of an entity.
