@@ -348,15 +348,16 @@ class NodeBase(Node):
             self.get_logger().info(f"[ACTION CLN] '{action_name}'")
         return client
 
-    def check_frame_global(self, frame_id: str, frame_prefix: str = "") -> bool:
+    def check_frame_global(self, frame_id: str) -> bool:
         """
         Checks if a given frame ID corresponds to the global frame, applying conventions.
 
         :param frame_id: Frame ID to check.
-        :param frame_prefix: Frame prefix to consider (including trailing slash).
         :return: Yes or no.
         """
-        return frame_id == frame_prefix + "map" or frame_id == frame_prefix + "world"
+        # Check for exact match or frame ending with these suffixes
+        global_frames = ["map", "world", "earth"]
+        return frame_id in global_frames or any(f"/{frame}" in frame_id for frame in global_frames)
 
     def check_frame_local(self, frame_id: str, frame_prefix: str = "") -> bool:
         """
