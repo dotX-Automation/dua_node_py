@@ -20,6 +20,9 @@ May 8, 2025
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Any, Callable, Tuple
+
+import math
 
 from rclpy.node import Node
 
@@ -41,7 +44,12 @@ from simple_serviceclient_py.simple_serviceclient import Client
 from rclpy.action import ActionServer
 from simple_actionclient_py.simple_actionclient import Client as ActionClient
 
-from typing import Any, Callable
+from builtin_interfaces.msg import Duration
+from dua_common_interfaces.msg import CommandResultStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped
+from std_msgs.msg import Header
+
+from dua_geometry_interfaces.srv import GetTransform, TransformPose
 
 
 class NodeBase(Node):
@@ -58,6 +66,8 @@ class NodeBase(Node):
         """
         super().__init__(node_name)
 
+        self._get_transform_client: Client = None
+        self._transform_pose_client: Client = None
         self._verbose = verbose
         self.pmanager = PManager(self, verbose)
 
@@ -85,6 +95,37 @@ class NodeBase(Node):
         if self._verbose:
             self.get_logger().info("--- PARAMETERS ---")
         self.pmanager.init()
+
+        # Declare TF server parameters
+        self.pmanager._declare_bool_parameter(
+            "dua.tf_server.get_transform",
+            False,
+            "Enable GetTransform client, allows use of standard get_transform API.",
+            "Must remap the service name to a compliant, existing service.",
+            True,
+            "_tf_server_get_transform",
+            ''
+        )
+        self.pmanager._declare_bool_parameter(
+            "dua.tf_server.transform_pose",
+            False,
+            "Enable TransformPose client, allows use of standard transform_pose API.",
+            "Must remap the service name to a compliant, existing service.",
+            True,
+            "_tf_server_transform_pose",
+            ''
+        )
+        self.pmanager._declare_bool_parameter(
+            "dua.tf_server.wait_servers",
+            False,
+            "Waits for TF servers to be available during node initialization.",
+            "If enabled, the node initialization will block until the TF servers are available.",
+            True,
+            "_tf_server_wait_servers",
+            ''
+        )
+
+        # Declare the rest of the parameters
         self.init_parameters()
 
     def _dua_init_cgroups(self):
@@ -131,6 +172,25 @@ class NodeBase(Node):
         """
         if self._verbose:
             self.get_logger().info("--- SERVICE CLIENTS ---")
+
+        # Initialize TF server clients
+        # get_transform
+        if self._tf_server_get_transform:
+            self._get_transform_client = self.dua_create_service_client(
+                GetTransform,
+                "/get_transform",
+                self._tf_server_wait_servers
+            )
+
+        # transform_pose
+        if self._tf_server_transform_pose:
+            self._transform_pose_client = self.dua_create_service_client(
+                TransformPose,
+                "/transform_pose",
+                self._tf_server_wait_servers
+            )
+
+        # Initialize the rest of the clients
         self.init_service_clients()
 
     def _dua_init_action_servers(self):
@@ -347,6 +407,116 @@ class NodeBase(Node):
         if self._verbose:
             self.get_logger().info(f"[ACTION CLN] '{action_name}'")
         return client
+
+    def get_transform(
+        self,
+        source: Header,
+        target: Header,
+        transform_frames: bool = False,
+        timeout: float = 1.0,
+        spin: bool = False,
+        srv_timeout: float = 0.0
+    ) -> Tuple[int, TransformStamped]:
+        """
+        Gets the transform between two frames.
+
+        :param source: Source frame ID and timestamp.
+        :param target: Target frame ID and timestamp.
+        :param transform_frames: Whether to output the transformation between frames or coordinates.
+        :param timeout: TF lookup timeout [s].
+        :param spin: Whether to spin the node while waiting for the response.
+        :param srv_timeout: Service call timeout [s].
+        :return: Tuple: 0 if the server did not respond, else the CommandResultStamped code; the transform.
+        :throws RuntimeError: if the client is not initialized.
+        """
+        # Consistency check
+        if self._get_transform_client is None:
+            raise RuntimeError("dua_node_py.NodeBase.get_transform: client not initialized")
+
+        # Create the request
+        req = GetTransform.Request()
+        if transform_frames:
+            req.source = target
+            req.target = source
+        else:
+            req.source = source
+            req.target = target
+        req.timeout = Duration(
+            seconds=int(timeout),
+            nanoseconds=int((timeout - math.floor(timeout)) * float(1e9))
+        )
+
+        # Send the request
+        resp: GetTransform.Response = self._get_transform_client.call_sync(req, spin, srv_timeout)
+
+        # Check the response
+        if resp is None:
+            self.get_logger().error(
+                f"GetTransform call error ('{source.frame_id}' -> '{target.frame_id}'): no response",
+                throttle_duration_sec=1.0
+            )
+            return (0, TransformStamped())
+        if resp.result.result == CommandResultStamped.ERROR:
+            self.get_logger().error(
+                f"GetTransform server error ('{source.frame_id}' -> '{target.frame_id}'): {resp.result.error_msg}",
+                throttle_duration_sec=1.0
+            )
+            return (resp.result.result, TransformStamped())
+
+        # Return the transform and the operation result
+        return (resp.result.result, resp.transform)
+
+    def transform_pose(
+        self,
+        source_pose: PoseStamped,
+        target: Header,
+        timeout: float = 1.0,
+        spin: bool = False,
+        srv_timeout: float = 0.0
+    ) -> Tuple[int, PoseStamped]:
+        """
+        Transforms a pose from a source frame to a target frame.
+
+        :param source_pose: Source pose with frame ID and timestamp.
+        :param target: Target frame ID and timestamp.
+        :param timeout: TF lookup timeout [s].
+        :param spin: Whether to spin the node while waiting for the response.
+        :param srv_timeout: Service call timeout [s].
+        :return: Tuple: 0 if the server did not respond, else the CommandResultStamped code; the transformed pose.
+        :throws RuntimeError: if the client is not initialized.
+        """
+        # Consistency check
+        if self._transform_pose_client is None:
+            raise RuntimeError("dua_node_py.NodeBase.transform_pose: client not initialized")
+
+        # Create the request
+        req = TransformPose.Request()
+        req.source_pose = source_pose
+        req.target = target
+        req.timeout = Duration(
+            seconds=int(timeout),
+            nanoseconds=int((timeout - math.floor(timeout)) * float(1e9))
+        )
+
+        # Send the request
+        resp: TransformPose.Response = self._transform_pose_client.call_sync(req, spin, srv_timeout)
+
+        # Check the response
+        if resp is None:
+            self.get_logger().error(
+                f"TransformPose call error ('{source_pose.header.frame_id}' -> '{target.frame_id}'): no response",
+                throttle_duration_sec=1.0
+            )
+            return (0, PoseStamped())
+        if resp.result.result == CommandResultStamped.ERROR:
+            self.get_logger().error(
+                f"TransformPose server error ('{source_pose.header.frame_id}' -> '{target.frame_id}'): {resp.result.error_msg}",
+                throttle_duration_sec=1.0
+            )
+            return (resp.result.result, PoseStamped())
+
+        # Return the result
+        return (resp.result.result, resp.target_pose)
 
     def check_frame_global(self, frame_id: str) -> bool:
         """
