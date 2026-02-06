@@ -455,7 +455,7 @@ class NodeBase(Node):
                 f"GetTransform call error ('{source.frame_id}' -> '{target.frame_id}'): no response",
                 throttle_duration_sec=1.0
             )
-            return (0, TransformStamped())
+            return (CommandResultStamped.TIMEOUT, TransformStamped())
         if resp.result.result == CommandResultStamped.ERROR:
             self.get_logger().error(
                 f"GetTransform server error ('{source.frame_id}' -> '{target.frame_id}'): {resp.result.error_msg}",
@@ -507,7 +507,7 @@ class NodeBase(Node):
                 f"TransformPose call error ('{source_pose.header.frame_id}' -> '{target.frame_id}'): no response",
                 throttle_duration_sec=1.0
             )
-            return (0, PoseStamped())
+            return (CommandResultStamped.TIMEOUT, PoseStamped())
         if resp.result.result == CommandResultStamped.ERROR:
             self.get_logger().error(
                 f"TransformPose server error ('{source_pose.header.frame_id}' -> '{target.frame_id}'): {resp.result.error_msg}",
