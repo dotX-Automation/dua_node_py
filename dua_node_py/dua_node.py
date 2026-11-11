@@ -377,7 +377,8 @@ class NodeBase(Node):
             goal_callback=goal_callback,
             cancel_callback=cancel_callback,
             handle_accepted_callback=handle_accepted_callback,
-            callback_group=as_cgroup)
+            callback_group=as_cgroup,
+            result_timeout=10)  # Same as the rcl default used by dua_node_cpp
         if self._verbose:
             self.get_logger().info(f"[ACTION SRV] '{self._get_entity_fqn(action_name)}'")
         return server
