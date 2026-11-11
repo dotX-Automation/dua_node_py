@@ -355,7 +355,8 @@ class NodeBase(Node):
         goal_callback: Callable,
         cancel_callback: Callable,
         handle_accepted_callback: Callable,
-        as_cgroup: CallbackGroup = None
+        as_cgroup: CallbackGroup = None,
+        result_timeout_s: int = 0
     ) -> ActionServer:
         """
         Wraps the creation of an action server.
@@ -367,8 +368,13 @@ class NodeBase(Node):
         :param cancel_callback: Cancel request callback.
         :param handle_accepted_callback: Accepted state callback.
         :param as_cgroup: Action server callback group.
+        :param result_timeout_s: Timeout until which the server stores a result [s]; <= 0 sets the API default.
         :return: Action server.
         """
+        result_timeout = 10  # Same as the rcl default used by dua_node_cpp
+        if result_timeout_s > 0:
+            result_timeout = result_timeout_s
+
         server = ActionServer(
             node=self,
             action_type=action_type,
@@ -378,7 +384,7 @@ class NodeBase(Node):
             cancel_callback=cancel_callback,
             handle_accepted_callback=handle_accepted_callback,
             callback_group=as_cgroup,
-            result_timeout=10)  # Same as the rcl default used by dua_node_cpp
+            result_timeout=result_timeout)
         if self._verbose:
             self.get_logger().info(f"[ACTION SRV] '{self._get_entity_fqn(action_name)}'")
         return server
